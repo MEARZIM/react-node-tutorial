@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const authRouter = require('./routes/auth');
 
 // Environment variables set up
 const dotenv = require('dotenv');
@@ -14,10 +15,7 @@ app.use(bodyParser.json())
 app.use(cors());
 
 // Routes
-app.use('/api/auth', async (req, res) => {
-    console.log("Hello")
-    res.send("success");
-});
+app.use('/api/auth', authRouter);
 
 
 // Port forwarding
