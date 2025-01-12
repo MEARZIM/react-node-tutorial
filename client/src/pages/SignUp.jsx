@@ -1,6 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form';
+import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
 
 
 const SignUp = () => {
@@ -10,8 +12,28 @@ const SignUp = () => {
         handleSubmit,
     } = useForm ();
 
-    const onSubmit = (data) => {
+    const onSubmit = async (data) => {
         console.log('Form Data:', data);
+        try {
+            
+            // const response = await fetch('http://localhost:8080/api/auth/signUp', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify(data),
+            // });
+
+            // const responseData = await response.json();
+            // console.log('Response Data:', responseData);
+
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_API_URL}/auth/signUp`, data);
+            console.log('Response Data:', response.data);
+            toast.success(response.data.message);
+
+        } catch (error) {
+            toast.error('Invalid credentials');
+        }
     };
 
     return (

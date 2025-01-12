@@ -54,10 +54,32 @@ router.post('/signin', async (req, res) => {
     if (!password) {
         return res.status(400).send('Password is required');
     }
+    
+    try {
+        const existingUser = await User.findOne({ email });
+        if (!existingUser) {
+            return res.status(400).json({
+                message: 'User does not exists'
+            });
+        }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+        const isValid = await bcrypt.compare(password, existingUser.password);
 
-    res.send("signed in");
+        if (!isValid) {
+            return res.status(400).json({
+                message: 'Invalid Password'
+            });
+        }
+
+        return res.status(200).json({
+            message: 'User Logged in successfully'
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+
 })
 
 module.exports = router;

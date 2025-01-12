@@ -1,6 +1,9 @@
 import React from 'react'
+import axios from 'axios';
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
+
 
 
 
@@ -9,6 +12,16 @@ const SignIn = () => {
         register,
         handleSubmit,
     } = useForm();
+
+    const onSubmit = async (data) => {
+        try {
+            const response =  await axios.post(`${import.meta.env.VITE_BACKEND_API_URL}/auth/signIn`, data);
+            console.log('Response Data:', response.data);
+            toast.success(response.data.message);
+        } catch (error) {
+            toast.error('Invalid credentials');
+        }
+    }
 
     return (
         <section className="bg-gray-50 dark:bg-gray-900">
@@ -21,9 +34,7 @@ const SignIn = () => {
                         </h1>
                         <form
                             className="space-y-4 md:space-y-6"
-                            onSubmit={handleSubmit((data) => {
-                                console.log('Form Data:', data);
-                            })}
+                            onSubmit={handleSubmit(onSubmit)}
                         >
                             <div>
                                 <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your email</label>
