@@ -1,6 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const jwt = require("jsonwebtoken");
+
 const User = require('../models/User');
+const authentication = require('../middleware/authentication');
 
 const router = express.Router();
 
@@ -54,7 +57,7 @@ router.post('/signin', async (req, res) => {
     if (!password) {
         return res.status(400).send('Password is required');
     }
-    
+
     try {
         const existingUser = await User.findOne({ email });
         if (!existingUser) {
@@ -71,14 +74,46 @@ router.post('/signin', async (req, res) => {
             });
         }
 
+        const token = jwt.sign({
+            _id: existingUser._id
+        }, process.env.JWT_SECRET, {
+            expiresIn: '1h'
+        })
+
+        // console.log(token);
+
         return res.status(200).json({
-            message: 'User Logged in successfully'
+            message: 'User Logged in successfully',
+            token: token
         });
 
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
+
+})
+
+router.get('/profile', authentication, async (req, res) => {
+
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(400).json({
+                message: 'User does not exists'
+            });
+        }
+
+        return res.status(200).json({
+            message: 'User Profile was successfully retrieved',
+            userData: user
+        });
+
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+
 
 })
 
