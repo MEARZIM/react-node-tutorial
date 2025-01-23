@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 
 const User = require('../models/User');
 const authentication = require('../middleware/authentication');
+const generateOtp = require('../helpers/generateOtp');
+const sendMail = require('../libs/mail');
 
 const router = express.Router();
 
@@ -115,6 +117,49 @@ router.get('/profile', authentication, async (req, res) => {
     }
 
 
+})
+
+
+// In-Memory Store for OTP (Use Redis or another database instead for production)
+const otpStore = {};
+
+router.post('/generate-otp', async (req, res) => {
+    const { email } = req.body;
+    
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
+    try {   
+        
+        // Check if user exists
+        const existingUser = await User.findOne({ email });
+
+        if (!existingUser) {
+            return res.status(400).json({
+                message: 'User does not exists'
+            });
+        }
+
+        const otp = generateOtp();
+        const expiresIn = Date.now() + 1000 * 30 ; // OTP expires in 30 Seconds
+
+        // Store the otp and expires in
+        otpStore[email] = {
+            otp,
+            expiresIn
+        };
+
+        // send mail
+        await sendMail(email, otp);
+
+        return res.status(200).json({ message: ' otp :' + otp})
+        
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
 })
 
 module.exports = router;
