@@ -162,7 +162,7 @@ router.post('/generate-otp', async (req, res) => {
         };
         console.log(otpStore[email].otp);
 
-        // Send OTP via email (uncomment when ready)
+        // Send OTP via email
         // await sendMail(email, otp);
 
         return res.status(200).json({ message: 'OTP generated: ' + otp });
@@ -175,7 +175,50 @@ router.post('/generate-otp', async (req, res) => {
 
 
 router.post('/verify-otp', async (req, res) => {
+    try {
+        const {
+            email,
+            otp
+        } = req.body;
+    
+        if (!email || !otp) { 
+            return res.status(400).json({
+                message: "Email and otp are required"
+            });
+        }
+    
+        const record = otpStore[email];
+    
+        if (!record || record.otp !== otp || record.expiresIn < Date.now()) {
+            return res.status(400).json({
+                message: "Invalid or expired OTP",
+            })
+        }
+    
+        // Clear OTP After Successful verification
+        delete otpStore[email];
+    
+    
+        return res.status(200).json({
+            message: "Verified OTP"
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
 
 })
+
+// Adding a Middleware to Clear OTP Every 30 seconds
+// IN Production the logic is slightly different than this
+setInterval(()=> {
+    const now = Date.now();
+    for (email in otpStore) {
+        if(otpStore[email].expiresIn < now) {
+            delete otpStore[email];
+        }
+    }
+},3000);
 
 module.exports = router;
