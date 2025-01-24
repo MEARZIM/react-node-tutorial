@@ -130,36 +130,52 @@ router.post('/generate-otp', async (req, res) => {
         return res.status(400).json({ message: 'Email is required' });
     }
 
-    try {   
-        
+    try {
         // Check if user exists
         const existingUser = await User.findOne({ email });
 
         if (!existingUser) {
             return res.status(400).json({
-                message: 'User does not exists'
+                message: 'User does not exist'
             });
         }
 
-        const otp = generateOtp();
-        const expiresIn = Date.now() + 1000 * 30 ; // OTP expires in 30 Seconds
+        const now = Date.now();
+        let otp;
 
-        // Store the otp and expires in
+        // Check if there's an OTP already stored for this email
+        if (otpStore[email] && otpStore[email].expiresIn > now) {
+            // If OTP is still valid, don't generate a new one
+            return res.status(400).json({ message: 'OTP already sent. Please wait for the current OTP to expire.' });
+        }
+
+        // Generate a new OTP
+        otp = generateOtp();
+        
+        // Set OTP expiry time (30 seconds)
+        const expiresIn = now + 1000 * 30;
+
+        // Store the OTP and expiry time
         otpStore[email] = {
             otp,
             expiresIn
         };
+        console.log(otpStore[email].otp);
 
-        // send mail
-        await sendMail(email, otp);
+        // Send OTP via email (uncomment when ready)
+        // await sendMail(email, otp);
 
-        return res.status(200).json({ message: ' otp :' + otp})
-        
+        return res.status(200).json({ message: 'OTP generated: ' + otp });
 
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: 'Internal Server Error' });
     }
+});
+
+
+router.post('/verify-otp', async (req, res) => {
+
 })
 
 module.exports = router;
